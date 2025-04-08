@@ -3,7 +3,7 @@ import { user } from '$lib/server/db/schema';
 import { eq } from 'drizzle-orm';
 
 import { json } from '@sveltejs/kit';
-import type { RequestHandler } from './$types';
+import type { RequestHandler } from '@sveltejs/kit';
 
 export const GET: RequestHandler = async () => {
     try {
@@ -23,15 +23,15 @@ export const GET: RequestHandler = async () => {
 
 export const POST: RequestHandler = async ({ request }) => {
     try {
-        const {name, course, age} = await request.json();
+        const { name, studentid, email, course } = await request.json();
 
-        if (!name || !course || !age) {
+        if (!name || !studentid || !email || !course) {
             return json({ success: false, message: "All fields are required." });
         }
 
         const newStudent = await db
             .insert(user)
-            .values({ name: name, course: course, age: age })
+            .values({ name: name,  studentid: studentid, email: email, course: course, })
             .returning();
         
         console.log(newStudent);
@@ -44,7 +44,7 @@ export const POST: RequestHandler = async ({ request }) => {
 
 export const PUT: RequestHandler = async ({ request }) => {
     try {
-        const { id, name , course, age } = await request.json();
+        const { id, name, course } = await request.json();
 
         if (!id) {
             return json({ success: false, message: "ID is required" });
@@ -58,7 +58,7 @@ export const PUT: RequestHandler = async ({ request }) => {
 
         const updatedStudent = await db
             .update(user)
-            .set({ name, course, age })
+            .set({ name, course })
             .where(eq(user.id, id))
             .returning();
 
