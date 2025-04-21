@@ -1,5 +1,5 @@
 import { db } from '$lib/server/db';
-import { admin } from '$lib/server/db/schema';
+import { user } from '$lib/server/db/schema';
 import { eq } from 'drizzle-orm';
 
 import bcrypt from 'bcrypt';
@@ -31,24 +31,24 @@ export const POST: RequestHandler = async ({ request }) => {
         if (!passRegex.test(password)) {
             return json({ success: false, message: "Password must be at least 8 characters long and include uppercase, lowercase, and a number." }, { status: 400 });
         }
-        const existingAdmin = await db
+        const existingUser = await db
             .select()
-            .from(admin)
-            .where(eq(admin.email, email));
+            .from(user)
+            .where(eq(user.email, email));
 
-        if (existingAdmin.length === 0) {
+        if (existingUser.length === 0) {
             return json({ success: false, message: "Email not found." }, { status: 404 });
         }
 
-        const matchedAdmin = existingAdmin[0];
-        const isPasswordValid = await bcrypt.compare(password, matchedAdmin.password);
+        const matchedUser = existingUser[0];
+        const isPasswordValid = await bcrypt.compare(password, matchedUser.password);
 
         if (!isPasswordValid) {
             return json({ success: false, message: "Incorrect email or password." }, { status: 400 });
         }
 
         const token = jwt.sign(
-            { id: matchedAdmin.id, email: matchedAdmin.email },
+            { id: matchedUser.id, email: matchedUser.email },
             JWT_SECRET,
             { expiresIn: '12h' }
         );

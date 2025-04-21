@@ -1,13 +1,12 @@
 import { db } from '$lib/server/db';
-import { admin } from '$lib/server/db/schema';
 import { user } from '$lib/server/db/schema';
+import { admin } from '$lib/server/db/schema';
 import { eq } from 'drizzle-orm';
 
 import bcrypt from 'bcrypt';
 
 import { json } from '@sveltejs/kit';
-import type { RequestHandler } from '@sveltejs/kit';
-
+import type { RequestHandler } from './$types';
 
 export const POST: RequestHandler = async ({ request }) => {
     try {
@@ -31,6 +30,15 @@ export const POST: RequestHandler = async ({ request }) => {
             return json({ success: false, message: 'Password must be at least 8 characters long and include uppercase, lowercase, and a number.' }, { status: 400 });
         }
         
+        const existingUser = await db
+            .select()
+            .from(user)
+            .where(eq(user.email, email));
+
+        if (existingUser.length > 0) {
+            return json({ success: false, message: 'An account with this email already exists.' }, { status: 400 });
+        }
+
         const existingAdmin = await db
             .select()
             .from(admin)
@@ -40,18 +48,9 @@ export const POST: RequestHandler = async ({ request }) => {
             return json({ success: false, message: 'An account with this email already exists.' }, { status: 400 });
         }
 
-        const existingUser = await db
-            .select()
-            .from(user)
-            .where(eq(user.email, email));
-
-        if (existingUser.length > 0) {
-            return json({ success: false, message: 'An account with this email already exists.' }, { status: 400 });
-        }
-        
         const hash = await bcrypt.hash(password, 10);
 
-        await db.insert(admin).values({
+        await db.insert(user).values({
             name,
             email,
             password: hash,
